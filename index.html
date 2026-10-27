@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>封面巨字 · 预览导出</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #121a2b;
+    --line: #243044;
+    --text: #e8eef8;
+    --muted: #8fa0b8;
+    --accent: #14b8a6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Noto Sans SC", system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 10% -10%, #163047 0%, var(--bg) 55%);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 900px) {
+    .wrap { grid-template-columns: 360px 1fr; align-items: start; }
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 6px; }
+  input, textarea, select {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: #0d1524;
+    color: var(--text);
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 15px;
+  }
+  textarea { min-height: 72px; resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .templates { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tpl {
+    border: 1px solid var(--line);
+    background: #0d1524;
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 13px;
+  }
+  .tpl.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .tpl small { display: block; color: var(--muted); margin-top: 4px; font-size: 11px; }
+  .actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  button.primary {
+    background: var(--accent);
+    color: #042f2e;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button.ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 11px 14px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .preview-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+  }
+  canvas {
+    width: min(100%, 360px);
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.35);
+    background: #000;
+  }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <h1>封面巨字</h1>
+      <p class="sub">输入短句 → 预览 → 下载 PNG。验证用最小页：固定模板、安全区不裁字。</p>
+
+      <label for="title">主标题（建议 ≤12 字）</label>
+      <textarea id="title" maxlength="24" placeholder="例如：项目群聊两天">项目群聊两天</textarea>
+
+      <label for="subtitle">副标题（可选）</label>
+      <input id="subtitle" maxlength="28" placeholder="例如：整理成一张图" value="整理成一张图"/>
+
+      <div class="row">
+        <div>
+          <label for="ratio">画幅</label>
+          <select id="ratio">
+            <option value="3:4" selected>小红书 3:4（1080×1440）</option>
+            <option value="9:16">竖屏 9:16（1080×1920）</option>
+          </select>
+        </div>
+        <div>
+          <label for="align">对齐</label>
+          <select id="align">
+            <option value="center" selected>居中</option>
+            <option value="left">靠左</option>
+          </select>
+        </div>
+      </div>
+
+      <label>模板</label>
+      <div class="templates" id="templates">
+        <button type="button" class="tpl active" data-tpl="teal">知识青绿<small>深底大字</small></button>
+        <button type="button" class="tpl" data-tpl="ink">纸感米白<small>杂志风</small></button>
+        <button type="button" class="tpl" data-tpl="night">夜黑金<small>强对比</small></button>
+        <button type="button" class="tpl" data-tpl="sky">天蓝卡<small>清爽</small></button>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="download" type="button">下载 PNG</button>
+        <button class="ghost" id="sample" type="button">填入示例文案</button>
+      </div>
+      <p class="hint">字体使用 Noto Sans SC（开源）。本页可本地打开；导出为高清 PNG，不含水印。验证阶段暂无登录与支付。</p>
+    </section>
+
+    <section class="panel">
+      <div class="preview-wrap">
+        <canvas id="cv" width="1080" height="1440" aria-label="封面预览"></canvas>
+      </div>
+    </section>
+  </div>
+  <p style="text-align:center;color:#8fa0b8;font-size:12px;margin:8px 0 24px;">验证版 · 反馈扣1</p>
+
+<script>
+(() => {
+  const titleEl = document.getElementById('title');
+  const subEl = document.getElementById('subtitle');
+  const ratioEl = document.getElementById('ratio');
+  const alignEl = document.getElementById('align');
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  let tpl = 'teal';
+
+  const themes = {
+    teal: {
+      bg: ['#0f766e', '#115e59', '#042f2e'],
+      title: '#ffffff',
+      sub: 'rgba(255,255,255,0.82)',
+      accent: '#99f6e4',
+      bar: true
+    },
+    ink: {
+      bg: ['#f7f1e8', '#efe6d8', '#e7dcc8'],
+      title: '#1c1917',
+      sub: '#57534e',
+      accent: '#0f766e',
+      bar: true
+    },
+    night: {
+      bg: ['#09090b', '#18181b', '#27272a'],
+      title: '#fafafa',
+      sub: '#a1a1aa',
+      accent: '#fbbf24',
+      bar: true
+    },
+    sky: {
+      bg: ['#0284c7', '#0369a1', '#0c4a6e'],
+      title: '#ffffff',
+      sub: 'rgba(255,255,255,0.85)',
+      accent: '#bae6fd',
+      bar: false
+    }
+  };
+
+  document.getElementById('templates').addEventListener('click', (e) => {
+    const btn = e.target.closest('.tpl');
+    if (!btn) return;
+    tpl = btn.dataset.tpl;
+    document.querySelectorAll('.tpl').forEach(b => b.classList.toggle('active', b === btn));
+    draw();
+  });
+
+  [titleEl, subEl, ratioEl, alignEl].forEach(el => el.addEventListener('input', draw));
+
+  document.getElementById('sample').onclick = () => {
+    titleEl.value = '别再手动做封面';
+    subEl.value = '三秒导出巨字 PNG';
+    draw();
+  };
+
+  document.getElementById('download').onclick = async () => {
+    await document.fonts.ready;
+    draw();
+    const a = document.createElement('a');
+    a.download = `cover-${tpl}-${Date.now()}.png`;
+    a.href = cv.toDataURL('image/png');
+    a.click();
+  };
+
+  function sizeForRatio() {
+    if (ratioEl.value === '9:16') return [1080, 1920];
+    return [1080, 1440];
+  }
+
+  function wrapText(text, maxWidth, font) {
+    ctx.font = font;
+    const chars = [...(text || '')];
+    const lines = [];
+    let line = '';
+    for (const ch of chars) {
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = ch;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines.slice(0, 4);
+  }
+
+  function draw() {
+    const [w, h] = sizeForRatio();
+    cv.width = w;
+    cv.height = h;
+    const theme = themes[tpl];
+    const g = ctx.createLinearGradient(0, 0, w * 0.2, h);
+    g.addColorStop(0, theme.bg[0]);
+    g.addColorStop(0.55, theme.bg[1]);
+    g.addColorStop(1, theme.bg[2]);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+
+    // safe margins ~8%
+    const padX = Math.round(w * 0.1);
+    const padTop = Math.round(h * 0.18);
+    const contentW = w - padX * 2;
+
+    if (theme.bar) {
+      ctx.fillStyle = theme.accent;
+      ctx.fillRect(padX, padTop - Math.round(h * 0.03), Math.round(w * 0.12), Math.round(h * 0.012));
+    }
+
+    const title = (titleEl.value || '输入主标题').trim();
+    const subtitle = (subEl.value || '').trim();
+    const align = alignEl.value;
+
+    // Title font size: fit content
+    let titleSize = Math.round(w * 0.13);
+    let titleLines = [];
+    for (; titleSize >= Math.round(w * 0.07); titleSize -= 2) {
+      titleLines = wrapText(title, contentW, `900 ${titleSize}px "Noto Sans SC"`);
+      const lineH = titleSize * 1.15;
+      if (titleLines.length * lineH <= h * 0.38) break;
+    }
+
+    ctx.fillStyle = theme.title;
+    ctx.textAlign = align === 'left' ? 'left' : 'center';
+    ctx.textBaseline = 'top';
+    const titleX = align === 'left' ? padX : w / 2;
+    let y = padTop;
+    titleLines.forEach((ln) => {
+      ctx.font = `900 ${titleSize}px "Noto Sans SC"`;
+      ctx.fillText(ln, titleX, y);
+      y += titleSize * 1.18;
+    });
+
+    if (subtitle) {
+      y += Math.round(h * 0.03);
+      const subSize = Math.round(w * 0.045);
+      const subLines = wrapText(subtitle, contentW, `500 ${subSize}px "Noto Sans SC"`);
+      ctx.fillStyle = theme.sub;
+      subLines.forEach((ln) => {
+        ctx.font = `500 ${subSize}px "Noto Sans SC"`;
+        ctx.fillText(ln, titleX, y);
+        y += subSize * 1.35;
+      });
+    }
+
+    // footer mark
+    ctx.fillStyle = theme.sub;
+    ctx.font = `500 ${Math.round(w * 0.028)}px "Noto Sans SC"`;
+    ctx.textAlign = 'left';
+    ctx.fillText('封面巨字 · 验证版', padX, h - Math.round(h * 0.07));
+  }
+
+  document.fonts.ready.then(draw);
+  draw();
+})();
+</script>
+</body>
+</html>
